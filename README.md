@@ -22,6 +22,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   * [Level 11 → 12](#level-11--12)
   * [Level 12 → 13](#level-12--13)
   * [Level 13 → 14](#level-13--14)
+  * [Level 14 → 15](#level-14--15)
+  * [Level 15 → 16](#level-15--16)
 * [⚠️ Disclaimer](#️-disclaimer)
 
 ## 📊 Progress Tracker
@@ -43,6 +45,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
 | **11 → 12** | Decrypting ROT13 letter rotation cipher | `tr` | [Writeup](#level-11--12) | ✅ Completed | 
 | **12 → 13** | Multi-layered binary & archive decompression | `xxd`, `gzip`, `bzip2`, `tar` | [Writeup](#level-12--13) | ✅ Completed | 
 | **13 → 14** | Secure file transfer & SSH private key login | `scp`, `chmod 600`, `ssh -i` | [Writeup](#level-13--14) | ✅ Completed | 
+| **14 → 15** | Sending plaintext credentials over raw TCP sockets | `nc` (Netcat) | [writeup](#level-14--15) | ✅ completed |
+| **15 → 16** | Communicating over encrypted SSL/TLS ports | `openssl s_client` | [writeup](#level-15--16) | ✅ completed |
 
 ## 🛠️ Environment & Tooling
 
@@ -218,6 +222,24 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   cat /etc/bandit_pass/bandit14
   ```
 * **Key Takeaway:** Using `scp` for integrity-preserving file transfers over SSH, enforcing strict `600` permissions on private identity keys (`chmod 600`), and authenticating via key-based SSH (`-i`).
+
+### Level 14 → 15
+
+* **Goal:** Retrieve the password for bandit15 by submitting the current password to port 30000 on localhost.
+* **Commands Executed:**
+  ```bash
+  cat /etc/bandit_pass/bandit14 | nc localhost 30000
+  ```
+* **Key Takeaway:** Using Netcat (nc) to open a raw TCP connection to a local network daemon and pipe standard input directly to the socket.
+
+  ### Level 15 → 16
+
+* **Goal:** Retrieve the password for bandit16 by submitting the current password to port 30001 on localhost using SSL/TLS encryption
+* **Commands Executed:**
+ ```bash
+cat /etc/bandit_pass/bandit15 | openssl s_client -connect localhost:30001 -quiet
+```
+* **Key Takeaway:** Plaintext tools like nc fail on encrypted ports because a TLS handshake is required first. openssl s_client establishes an encrypted SSL/TLS session, while -quiet suppresses certificate output and prevents premature EOF termination.
 
 ## ⚠️ Disclaimer
 
