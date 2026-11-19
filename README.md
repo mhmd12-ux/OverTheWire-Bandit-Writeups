@@ -1,6 +1,6 @@
 # 🛡️ OverTheWire Bandit: Cybersecurity & Linux CLI Write-ups
 
-Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 14.
+Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 16.
 
 ## 📌 Table of Contents
 
