@@ -24,6 +24,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   * [Level 13 → 14](#level-13--14)
   * [Level 14 → 15](#level-14--15)
   * [Level 15 → 16](#level-15--16)
+  * [Level 16 → 17](#level-16--17)
+  * [Level 17 → 18](#level-17--18)
 * [⚠️ Disclaimer](#️-disclaimer)
 
 ## 📊 Progress Tracker
@@ -47,6 +49,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
 | **13 → 14** | Secure file transfer & SSH private key login | `scp`, `chmod 600`, `ssh -i` | [Writeup](#level-13--14) | ✅ Completed | 
 | **14 → 15** | Sending plaintext credentials over raw TCP sockets | `nc` (Netcat) | [writeup](#level-14--15) | ✅ completed |
 | **15 → 16** | Communicating over encrypted SSL/TLS ports | `openssl s_client` | [writeup](#level-15--16) | ✅ completed |
+| **16 → 17** | Port scanning, SSL service enumeration & SSH key extraction | `nmap`, `openssl s_client` | [Writeup](#level-16--17) | ✅ Completed |
+| **17 → 18** | Detecting file modifications line-by-line | `diff` | [Writeup](#level-17--18) | ✅ Completed |
 
 ## 🛠️ Environment & Tooling
 
@@ -232,7 +236,7 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   ```
 * **Key Takeaway:** Using Netcat (nc) to open a raw TCP connection to a local network daemon and pipe standard input directly to the socket.
 
-  ### Level 15 → 16
+### Level 15 → 16
 
 * **Goal:** Retrieve the password for bandit16 by submitting the current password to port 30001 on localhost using SSL/TLS encryption
 * **Commands Executed:**
@@ -240,6 +244,35 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
 cat /etc/bandit_pass/bandit15 | openssl s_client -connect localhost:30001 -quiet
 ```
 * **Key Takeaway:** Plaintext tools like nc fail on encrypted ports because a TLS handshake is required first. openssl s_client establishes an encrypted SSL/TLS session, while -quiet suppresses certificate output and prevents premature EOF termination.
+
+### Level 16 → 17
+
+* **Goal:** Identify which open port in the range 31000–32000 on localhost speaks SSL/TLS, submit the bandit16 password to obtain an SSH private key, and log in as bandit17
+* **Commands Executed:**
+ ```bash
+# Step 1: Fast scan to locate open ports in the target range
+nmap -p 31000-32000 -T4 localhost
+
+# Step 2: Test the discovered open ports for SSL/TLS response
+for port in 31046 31518 31691 31790 31960; do
+  echo "=== Port $port ==="
+  timeout 3 openssl s_client -connect localhost:$port -quiet < /etc/bandit_pass/bandit16
+done
+
+# Step 3: Save the returned RSA private key locally and connect
+chmod 600 ~/bandit17.key
+ssh -i ~/bandit17.key bandit17@bandit.labs.overthewire.org -p 2220
+```
+* **Key Takeaway:** Combining fast port discovery (nmap -T4) with automated service probing (openssl s_client) to isolate an SSL-wrapped service from standard echo ports and extract valid SSH credentials.
+
+### Level 17 → 18
+
+* **Goal:** Find the password for bandit18, which is the only line that changed between passwords.old and passwords.new.
+* **Commands Executed:**
+ ```bash
+diff passwords.old passwords.new
+```
+* **Key Takeaway:** Using diff for line-by-line file comparison. Lines prefixed with < belong to the first file (passwords.old), while lines prefixed with > show the updated entry in the second file (passwords.new).
 
 ## ⚠️ Disclaimer
 
