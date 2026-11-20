@@ -1,6 +1,6 @@
 # 🛡️ OverTheWire Bandit: Cybersecurity & Linux CLI Write-ups
 
-Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 16.
+Welcome to the **OverTheWire Bandit** write-ups repository. This project documents hands-on solutions, Linux command-line mechanics, data manipulation techniques, and foundational security concepts learned while completing Levels 0 through 22.
 
 ## 📌 Table of Contents
 
@@ -26,6 +26,10 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
   * [Level 15 → 16](#level-15--16)
   * [Level 16 → 17](#level-16--17)
   * [Level 17 → 18](#level-17--18)
+  * [Level 18 → 19](#level-18--19)
+  * [Level 19 → 20](#level-19--20)
+  * [Level 20 → 21](#level-20--21)
+  * [Level 21 → 22](#level-21--22)
 * [⚠️ Disclaimer](#️-disclaimer)
 
 ## 📊 Progress Tracker
@@ -51,6 +55,10 @@ Welcome to the **OverTheWire Bandit** write-ups repository. This project documen
 | **15 → 16** | Communicating over encrypted SSL/TLS ports | `openssl s_client` | [writeup](#level-15--16) | ✅ completed |
 | **16 → 17** | Port scanning, SSL service enumeration & SSH key extraction | `nmap`, `openssl s_client` | [Writeup](#level-16--17) | ✅ Completed |
 | **17 → 18** | Detecting file modifications line-by-line | `diff` | [Writeup](#level-17--18) | ✅ Completed |
+| **18 → 19** | Bypassing restricted `.bashrc` via non-interactive SSH | `ssh user@host "cmd"` | [Writeup](#level-18--19) | ✅ Completed |
+| **19 → 20** | Privilege escalation via SUID binary execution | `./bandit20-do` | [Writeup](#level-19--20) | ✅ Completed |
+| **20 → 21** | SUID binary interaction via Netcat listener & background jobs | `nc -l -p`, `&`, `./suconnect` | [Writeup](#level-20--21) | ✅ Completed |
+| **21 → 22** | Auditing scheduled Cron jobs & exposed `/tmp` files | `ls /etc/cron.d/`, `cat` | [Writeup](#level-21--22) | ✅ Completed |
 
 ## 🛠️ Environment & Tooling
 
@@ -274,6 +282,50 @@ diff passwords.old passwords.new
 ```
 * **Key Takeaway:** Using diff for line-by-line file comparison. Lines prefixed with < belong to the first file (passwords.old), while lines prefixed with > show the updated entry in the second file (passwords.new).
 
+### Level 18 → 19
+
+* **Goal:** Retrieve the password stored in readme inside bandit18's home directory despite .bashrc immediately terminating interactive SSH logins (Byebye !).
+* **Commands Executed:**
+ ```bash
+ssh bandit18@bandit.labs.overthewire.org -p 2220 "cat readme"
+```
+* **Key Takeaway:** Passing a command directly to ssh executes a non-interactive session without allocating a PTY or loading ~/.bashrc, bypassing interactive shell restrictions.
+
+### Level 19 → 20
+
+* **Goal:** Use the SUID binary bandit20-do to read the password file /etc/bandit_pass/bandit20 owned by bandit20.
+* **Commands Executed:**
+ ```bash
+ls -la
+./bandit20-do cat /etc/bandit_pass/bandit20
+```
+* **Key Takeaway:**  Understanding SUID permissions (-rwsr-x---), where an executable runs with the effective privileges of its file owner (bandit20) rather than the invoking user.
+
+### Level 20 → 21
+
+* **Goal:**  Use the SUID binary suconnect to connect to a local port, verify the bandit20 password, and receive the bandit21 password.
+* **Commands Executed:**
+ ```bash
+# Step 1: Start a background Netcat listener serving the current password
+cat /etc/bandit_pass/bandit20 | nc -l -p 4444 &
+
+# Step 2: Trigger suconnect to connect to the local listener
+./suconnect 4444
+
+```
+* **Key Takeaway:**  Running a local TCP listener in the background (&) to interact with a privileged SUID network client within a single SSH session.
+
+### Level 21 → 22
+
+* **Goal:**  Inspect scheduled Cron jobs in /etc/cron.d/ to discover how bandit22's password is exposed by an automated script.
+* **Commands Executed:**
+ ```bash
+ls -la /etc/cron.d/
+cat /etc/cron.d/cronjob_bandit22
+cat /usr/bin/cronjob_bandit22.sh
+cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+```
+* **Key Takeaway:**  Auditing /etc/cron.d/ reveals automated scripts running with elevated user privileges; writing sensitive data to world-readable /tmp files (chmod 644) leads to information disclosure
 ## ⚠️ Disclaimer
 
 In accordance with ethical write-up standards for cybersecurity wargames, all actual passwords and flags have been strictly redacted. This repository focuses solely on methodology, command mechanics, and problem-solving logic.
